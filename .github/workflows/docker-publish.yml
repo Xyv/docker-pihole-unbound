@@ -44,7 +44,7 @@ jobs:
           # Use Docker `latest` tag convention
           [ "$VERSION" == "master" ] && VERSION=latest
           # Export version to reuse in next job
-          echo '::set-output name=PIHOLE_VERSION::${VERSION}'
+
           echo "${VERSION}"
           echo "${PIHOLE_VERSION}"
 
@@ -66,9 +66,14 @@ jobs:
           # Change all uppercase to lowercase
           IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
 
-          docker images
-          PIHOLE_VERSION="${{ steps.build-image.outputs.PIHOLE_VERSION }}"
-          echo "${PIHOLE_VERSION}"
+          # Strip git ref prefix from version
+          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+
+          # Strip "v" prefix from tag name
+          [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
+
+          # Use Docker `latest` tag convention
+          [ "$VERSION" == "master" ] && VERSION=latest
 
           docker buildx build \
           --platform linux/arm/v7 \
